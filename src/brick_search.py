@@ -24,7 +24,7 @@ from threading import Lock
 # kong work
 import matplotlib.pyplot as plt
 from matplotlib import colors
-
+from sensor_msgs.msg import LaserScan
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 from matplotlib.colors import hsv_to_rgb
 from visualization_msgs.msg import Marker
@@ -34,7 +34,7 @@ from visualization_msgs.msg import Marker
 import roslaunch
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID
-from sensor_msgs.msg import LaserScan
+
 
 def wrap_angle(angle):
     # Function to wrap an angle between 0 and 2*Pi
@@ -246,7 +246,7 @@ class BrickSearch:
 
         for contour in contours:
             area = cv.contourArea(contour)
-            if min_area < area < max_area:
+            if min_area < area:
                 perimeter = cv.arcLength(contour, True)
                 approx = cv.approxPolyDP(contour, 0.04 * perimeter, True)
                 if len(approx) >= 4 and len(approx) <= 6:
@@ -279,16 +279,7 @@ class BrickSearch:
         
         if (self.brick_img & self.brick_scan):
             self.brick_found_ = True
-            
-            # self.state_ = -1
-            # self.marker_publisher.publish(marker)
-            # Stop turning
-            # twist = Twist()
-            # twist.angular.z = 0.0
-            # twist.linear.x = 0.0
-            # self.cmd_vel_pub_.publish(twist)
-            
-        
+                 
         
     
     def laser_callback(self,scan_data):
@@ -304,24 +295,21 @@ class BrickSearch:
         ### lidar scan data gives distane for each degree in 360 
         
         rospy.loginfo('laser_callback')
-        # print("LEFT", self.regions_['left'])
-        # print("RIGHT", self.regions_['right'])
-        # print("FRONT", self.regions_['front'])
 
         beam_angle = 25
-        distance_threshold = 0.4
+        distance_threshold = 0.3
         self.brick_angle = 0
-        point_count = 0
+        # point_count = 0
         for i in np.array(range(-beam_angle, beam_angle)):
-            if np.abs(scan_data.ranges[i] - scan_data.ranges[i-1]) > distance_threshold:
-            # if scan_data.ranges[i] - scan_data.ranges[i-1] > distance_threshold:
-                point_count += 1
+            # if np.abs(scan_data.ranges[i] - scan_data.ranges[i-1]) > distance_threshold:
+            if scan_data.ranges[i] - scan_data.ranges[i-1] > distance_threshold:
+                # point_count += 1
                 print(" =====  OBSTACLE ANGLE =====", i)
-                self.brick_angle += i/2                 # get the average sum for the angle
-                if (point_count == 2):
-                    self.brick_scan = True
-                    if (self.brick_img & self.brick_scan):
-                        self.brick_found_ = True
+                self.brick_angle = i-3                # get the average sum for the angle
+                # if (point_count == 2):
+                self.brick_scan = True
+                if (self.brick_img & self.brick_scan):
+                    self.brick_found_ = True
         
         print(" ===== brick_angle =====", self.brick_angle)
         self.brick_distance = scan_data.ranges[int(self.brick_angle)]
@@ -364,19 +352,14 @@ class BrickSearch:
             # state_description = 'case 3 - fright'
             # following
             self.change_state(1)
-        
-        # elif regions['front'] > d and regions['fleft'] <= d and regions['fright'] > d:  #regions['right']
-        #     # state_description = 'case 4 - fleft'
-        #     self.change_state(0)
+            
         elif regions['front'] < d and regions['fleft'] > d and regions['fright'] <= d:
             # state_description = 'case 5 - front and fright'
             self.change_state(1)
         elif regions['front'] <= d and regions['fleft'] <= d:       # inner turn 
             
             self.change_state(1)
-        # elif regions['front'] > d and regions['fleft'] < d and regions['fright'] < d:
-        #     # state_description = 'case 8 - fleft and fright'
-        #     self.change_state(0)
+            
         else:
             # state_description = 'unknown case'
             rospy.loginfo(regions)
@@ -438,6 +421,10 @@ class BrickSearch:
 
         rate.sleep()
         
+        # self.move_toward_brick(delta_theta, brick_distance)
+
+        
+        
         return
         # self.move_toward_brick(delta_theta, brick_distance)
 
@@ -474,9 +461,6 @@ class BrickSearch:
         
         target = self.transform_pose_to_map_frame(target)
         
-        # print('========   Current pose: ', pose_2d.theta + delta_theta)
-        # pose_2d.x += 0.5 * math.cos(pose_2d.theta + delta_theta)
-        # pose_2d.y += 0.5 * math.sin(pose_2d.theta + delta_theta)
         rospy.loginfo('======== Target Pose (map): ' + str(target.x) + ' ' + str(target.y) + ' ' + str(target.theta))
         
         
@@ -484,7 +468,8 @@ class BrickSearch:
         
         self.publish_pose_marker(pose2d_to_pose(pose_2d))
         
-        return
+        
+        # return
         # Send a goal to "move_base" with "self.move_base_action_client_"
         action_goal = MoveBaseActionGoal()
         action_goal.goal.target_pose.header.frame_id = 'map'
