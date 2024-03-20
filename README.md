@@ -3,8 +3,8 @@
 The aim of this project was to establish control of the TurtleBot and to combine this control with multiple concepts including navigation, image analysis, SLAM and exploration. By implementing these techniques, the goal of the TurtleBot is to autonomously explore either an unknown or pre-explored maze environment, utilising onboard sensors to detect red brick.
 This project has many phases, including: map construction, localization, and recognization and decision making.  
 
-<p>
-  <img style="width: 100%;" src="screenshots/sim.png" />
+<p align="center">
+  <img style="width: 100%;" src="media/3d_world design.gif" />
 </p>
 
 ## 2D Map Construction and Exploration
@@ -14,18 +14,15 @@ This project has many phases, including: map construction, localization, and rec
         roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch 
         
 <p>
-  <img style="width: 100%;" src="media/exploration_gmap.png" />
+  <img style="width: 80%;" src="media/exploration_gmap.png" />
 </p>
-
-* **SDL2**: Make sure to have installed SDL2 Version at least 2.0.20. Visit https://wiki.libsdl.org/SDL2/Installation for installation instruction. It is recommded that you install from source instead of `libsdl2-dev` from `apt`, since SDL version on apt is 2.0.10.
-* **yaml-cpp**: Instruction on how to download is here: https://github.com/jbeder/yaml-cpp
 
 ## Localization and Navigation with a pre-built map 
 
 Using the map generated from previous phase, the robot will determine its location and orientation based on the loaded map. The algorithm was based on Particle Filter, which I already tried to implement (visit for more detail)
 
 <p>
-  <img style="width: 100%;" src="media/localization" />
+  <img style="width: 80%;" src="media/localization.png" />
 </p>
 
 ## Decision-making
@@ -35,8 +32,8 @@ The technique used for this task was a wall-following algorithm which allows for
 1: ‘turn left’
 2: ‘follow the wall’
 
-<p>
-  <img style="width: 100%;" src="media/localization" />
+<p align="center">
+  <img style="width: 50%;" src="media/lidar_cali.png" />
 </p>
 
 For the TurtleBot 3 Waffle, Lidar sensor gives the distance for each degree (total 360). Region areas are established and refreshed making use of the laser callback to know where the walls are relative to the robot. 
@@ -46,10 +43,13 @@ After testing few times, three important regions used to compute prediction step
 
 The subsequent step involves loading and converting the image to the HSV colour space. Within this colour space, it becomes imperative to establish the lower and upper thresholds of the colour range intended for detection. The OpenCV library's 'inRange()' function proves instrumental in isolating the pixels that fall within this defined colour range. This process ensures that only those pixels falling within the specified colour range are retained and extracted for further analysis. 
 The contours of the square shape are extracted, with the overall cube’s shape being approximated based on these contours. Lidar range data is also used to compute the size of the obstacle.  
-<p>
-  <img style="width: 100%;" src="media/localization" />
+<p align="center">
+  <img style="width: 70%;" src="media/object_detect.png" />
+</p>
+
+<p align="center">
+  <img src="media/Untitled design 1.gif" style="width: 100%;" >
 </p>
 
 For more information, refer here:
 * https://github.com/ethz-asl/kalibr/wiki/IMU-Noise-Model
-* https://www.mathworks.com/help/nav/ref/imusensor-system-object.html
